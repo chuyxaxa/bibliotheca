@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bibliotheca — Mi biblioteca</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=DM+Sans:wght@400;500&display=swap');
+
+:root {
+ --bg:#151310; --panel:#211c17; --gold:#c4a46a;
+ --cream:#e8ddc6; --muted:#a99b83; --line:#443523;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--cream);font-family:'DM Sans',sans-serif}
+header{padding:25px 5%;background:#1b1712;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.logo{font:26px Cinzel,serif;letter-spacing:4px;color:var(--gold)}
+.subtitle{font-size:10px;letter-spacing:3px;color:var(--muted);margin-top:5px}
+button{cursor:pointer}
+.btn{background:transparent;color:var(--cream);border:1px solid #77603d;padding:10px 15px;border-radius:3px}
+.btn.gold{background:var(--gold);color:#20180f;border:0}
+main{max-width:1450px;margin:auto;padding:30px 4%}
+h1{font:32px Cinzel,serif;font-weight:400;margin:0 0 8px}
+p{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:25px 0}
+.stat{padding:16px;background:var(--panel);border:1px solid var(--line)}
+.stat-number{font:27px Cinzel,serif;color:var(--gold)}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:25px 0}
+.toolbar input,.toolbar select{background:var(--panel);border:1px solid var(--line);color:var(--cream);padding:11px}
+.toolbar input{flex:1;min-width:180px}
+.section-title{font:21px Cinzel,serif;color:var(--gold);margin:28px 0 15px}
+.shelf{background:linear-gradient(90deg,#1c1711,#292017,#1b1611);border:1px solid #3b2d1e;padding:14px 12px 0;margin-bottom:30px;overflow-x:auto}
+.books{display:flex;gap:6px;align-items:flex-end;min-height:185px;width:max-content;min-width:100%}
+.book{height:160px;width:95px;flex-shrink:0;cursor:pointer;transition:.2s;border:1px solid #ffffff22;box-shadow:3px 0 5px #0005;overflow:hidden;background:#453421}
+.book:hover{transform:translateY(-9px);filter:brightness(1.15)}
+.book img{width:100%;height:100%;object-fit:cover}
+.board{height:19px;background:linear-gradient(#765333,#4b301c,#2c1c11);border-top:2px solid #97734c;border-bottom:4px solid #21150e;box-shadow:0 9px 14px #0008}
+.empty{padding:30px;text-align:center;color:#80745f}
+.modal-bg{display:none;position:fixed;inset:0;background:#000c;z-index:9;align-items:center;justify-content:center;padding:15px}
+.modal-bg.active{display:flex}
+.modal{width:100%;max-width:850px;max-height:94vh;overflow-y:auto;background:#211c17;border:1px solid #685032;padding:22px}
+.close{float:right;background:none;border:0;color:var(--cream);font-size:25px}
+.modal h2{font:24px Cinzel,serif;color:var(--gold);font-weight:400}
+.searchbar{display:flex;gap:8px}
+.searchbar input{flex:1;min-width:0;background:#151310;border:1px solid var(--line);color:var(--cream);padding:12px}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:13px;margin-top:18px}
+.result{background:#191510;border:1px solid #443523;padding:9px;cursor:pointer;transition:.15s}
+.result:hover{border-color:var(--gold);transform:translateY(-3px)}
+.result img{width:100%;height:185px;object-fit:contain;background:#100e0b}
+.result .rt{font-size:13px;margin-top:8px;color:var(--cream)}
+.result .ra{font-size:11px;color:var(--muted);margin-top:4px}
+.formfield{margin:13px 0}
+.formfield label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.formfield input,.formfield select,.formfield textarea{width:100%;background:#151310;border:1px solid #51412d;color:var(--cream);padding:11px}
+.dategrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.selectedbook{display:flex;gap:18px;margin:15px 0;align-items:flex-start}
+.selectedbook img{width:125px;max-height:185px;object-fit:contain;background:#151310}
+.selectedbook div{flex:1}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.yearrow{font:16px Cinzel,serif;color:var(--gold);margin:20px 0 10px}
+.small{font-size:12px;color:var(--muted)}
+footer{text-align:center;padding:35px;color:#75664e;font:11px Cinzel,serif;letter-spacing:3px}
+@media(max-width:650px){.stats{grid-template-columns:repeat(2,1fr)}main{padding:20px 14px}header{padding:20px}.book{width:80px}.dategrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+ <div>
+  <div class="logo">BIBLIOTHECA</div>
+  <div class="subtitle">ARCHIVO PERSONAL DE LECTURA</div>
+ </div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <button class="btn" onclick="exportBackup()">Exportar respaldo</button>
+  <button class="btn gold" onclick="openSearch()">+ Añadir libro</button>
+ </div>
+</header>
+
+<main>
+ <h1>Mi biblioteca personal</h1>
+ <p>Un espacio para cada historia que ha formado parte de mi vida.</p>
+
+ <section class="stats">
+  <div class="stat"><div class="stat-number" id="total">0</div><div class="stat-label">Registrados</div></div>
+  <div class="stat"><div class="stat-number" id="read">0</div><div class="stat-label">Leídos</div></div>
+  <div class="stat"><div class="stat-number" id="reading">0</div><div class="stat-label">Leyendo</div></div>
+  <div class="stat"><div class="stat-number" id="pending">0</div><div class="stat-label">Pendientes</div></div>
+ </section>
+
+ <div class="stat">
+  <div class="stat-label">LIBROS TERMINADOS ESTE AÑO</div>
+  <div class="stat-number" id="thisYear">0</div>
+  <div id="yearStats" class="small" style="margin-top:8px"></div>
+ </div>
+
+ <div class="toolbar">
+  <input id="filter" placeholder="Buscar en mi biblioteca..." oninput="render()">
+  <select id="statusFilter" onchange="render()">
+   <option value="all">Todos</option>
+   <option value="read">Leídos</option>
+   <option value="reading">Leyendo</option>
+   <option value="pending">Pendientes</option>
+  </select>
+ </div>
+
+ <div id="shelves"></div>
+</main>
+<footer>BIBLIOTHECA · EX LIBRIS · PERSONAL READING ARCHIVE</footer>
+
+<!-- BÚSQUEDA -->
+<div class="modal-bg" id="searchModal">
+ <div class="modal">
+  <button class="close" onclick="closeModal('searchModal')">×</button>
+  <h2>Buscar libros</h2>
+  <p>Escribe el título, parte del título o autor. Prueba con palabras cortas si no aparece.</p>
+  <div class="searchbar">
+   <input id="query" placeholder="Ej. principito, Dune, Orwell...">
+   <button class="btn gold" onclick="searchBooks()">Buscar</button>
+  </div>
+  <div id="results" class="results"></div>
+  <div style="margin-top:20px">
+   <button class="btn" onclick="manualAdd()">Agregar título manualmente</button>
+  </div>
+ </div>
+</div>
+
+<!-- FICHA DEL LIBRO -->
+<div class="modal-bg" id="bookModal">
+ <div class="modal">
+  <button class="close" onclick="closeModal('bookModal')">×</button>
+  <div id="bookForm"></div>
+ </div>
+</div>
+
+<script>
+const KEY = "bibliotheca_books_v2";
+let books = JSON.parse(localStorage.getItem(KEY) || "[]");
+let chosen = null;
+
+const months = [
+ ["","Sin especificar mes"],
+ ["01","Enero"],["02","Febrero"],["03","Marzo"],
+ ["04","Abril"],["05","Mayo"],["06","Junio"],
+ ["07","Julio"],["08","Agosto"],["09","Septiembre"],
+ ["10","Octubre"],["11","Noviembre"],["12","Diciembre"]
+];
+
+function safe(s=""){
+ return String(s).replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+ }[c]));
+}
+
+function save(){
+ localStorage.setItem(KEY,JSON.stringify(books));
+ render();
+}
+
+function openSearch(){
+ document.getElementById("searchModal").classList.add("active");
+ document.getElementById("query").focus();
+}
+
+function closeModal(id){
+ document.getElementById(id).classList.remove("active");
+}
+
+function monthOptions(value=""){
+ return months.map(([v,label])=>
+  `<option value="${v}" ${value===v?"selected":""}>${label}</option>`
+ ).join("");
+}
+
+/* --- BÚSQUEDA MULTICATÁLOGO --- */
+async function searchBooks(){
+ const q=document.getElementById("query").value.trim();
+ const out=document.getElementById("results");
+ if(!q){alert("Escribe algo para buscar.");return;}
+
+ out.innerHTML='<div class="small">Buscando en varios catálogos…</div>';
+
+ const tasks=[
+  fetch("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults=40")
+   .then(r=>r.json()).then(d=>(d.items||[]).map(x=>googleBook(x))),
+  fetch("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent("intitle:"+q)+"&maxResults=40")
+   .then(r=>r.json()).then(d=>(d.items||[]).map(x=>googleBook(x))),
+  fetch("https://openlibrary.org/search.json?title="+encodeURIComponent(q)+"&limit=40")
+   .then(r=>r.json()).then(d=>(d.docs||[]).map(x=>openLibraryBook(x)))
+ ];
+
+ try{
+  const groups=await Promise.allSettled(tasks);
+  let list=groups.flatMap(g=>g.status==="fulfilled"?g.value:[]);
+
+  // Combina resultados duplicados
+  const unique=new Map();
+  list.forEach(b=>{
+   if(!b.title)return;
+   const k=(b.title+"|"+b.author).toLowerCase();
+   if(!unique.has(k))unique.set(k,b);
+   else if(!unique.get(k).cover && b.cover)unique.get(k).cover=b.cover;
+  });
+
+  list=[...unique.values()];
+
+  // Ordena los resultados por coincidencia del título
+  const norm=s=>String(s||"").toLowerCase()
+   .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+   .replace(/[^\w\s]/g," ").replace(/\s+/g," ").trim();
+
+  const query=norm(q);
+  list.sort((a,b)=>{
+   const A=norm(a.title),B=norm(b.title);
+   const score=s=>s===query?0:s.startsWith(query)?1:s.includes(query)?2:
+    query.split(" ").every(w=>s.includes(w))?3:4;
+   return score(A)-score(B);
+  });
+
+  out.innerHTML="";
+  if(!list.length){
+   out.innerHTML='<div class="small">No se encontraron coincidencias. Intenta con menos palabras o agrega el libro manualmente.</div>';
+   return;
+  }
+
+  list.forEach(b=>{
+   const card=document.createElement("div");
+   card.className="result";
+   card.innerHTML=`
+    <img src="${safe(b.cover||"")}" alt="Portada"
+     onerror="this.style.opacity='.15'">
+    <div class="rt">${safe(b.title)}</div>
+    <div class="ra">${safe(b.author||"Autor desconocido")}</div>`;
+   card.onclick=()=>selectBook(b);
+   out.appendChild(card);
+  });
+ }catch(e){
+  out.innerHTML='<div class="small">No se pudo conectar. Revisa internet e inténtalo de nuevo.</div>';
+ }
+}
+
+function googleBook(item){
+ const v=item.volumeInfo||{};
+ let cover=v.imageLinks?.thumbnail||v.imageLinks?.smallThumbnail||"";
+ cover=cover.replace("http://","https://").replace("&edge=curl","");
+ return {
+  title:v.title||"",
+  author:(v.authors||[]).join(", "),
+  cover,
+  description:v.description||"",
+  published:v.publishedDate||"",
+  source:"Google Books"
+ };
+}
+
+function openLibraryBook(v){
+ let cover=v.cover_i
+  ? "https://covers.openlibrary.org/b/id/"+v.cover_i+"-L.jpg"
+  : "";
+ return {
+  title:v.title||"",
+  author:(v.author_name||[]).join(", "),
+  cover,
+  description:"",
+  published:v.first_publish_year?String(v.first_publish_year):"",
+  source:"Open Library"
+ };
+}
+
+/* --- SELECCIONAR LIBRO --- */
+function selectBook(b){
+ chosen={...b,status:"pending",startMonth:"",startYear:"",endMonth:"",endYear:""};
+ showForm();
+}
+
+function manualAdd(){
+ const q=document.getElementById("query").value.trim();
+ if(!q){alert("Escribe el título que deseas registrar.");return;}
+ selectBook({title:q,author:"",cover:"",description:"",published:""});
+}
+
+function showForm(){
+ closeModal("searchModal");
+ document.getElementById("bookModal").classList.add("active");
+ const b=chosen;
+
+ document.getElementById("bookForm").innerHTML=`
+  <h2>${safe(b.title)}</h2>
+  <div class="selectedbook">
+   ${b.cover?`<img src="${safe(b.cover)}" alt="Portada" onerror="this.style.display='none'">`:""}
+   <div>
+    <p style="color:var(--cream)">${safe(b.author||"Autor desconocido")}</p>
+    <p class="small">${safe(b.published||"")}</p>
+    <p class="small">${safe(b.description||"")}</p>
+   </div>
+  </div>
+
+  <div class="formfield">
+   <label>¿Cuál es tu estado de lectura?</label>
+   <select id="bookStatus" onchange="toggleDates()">
+    <option value="pending">No lo he leído (Pendiente)</option>
+    <option value="reading">Lo estoy leyendo</option>
+    <option value="read">Ya lo leí</option>
+   </select>
+  </div>
+
+  <div id="dateFields"></div>
+
+  <div class="actions">
+   <button class="btn gold" onclick="saveChosen()">Agregar a mi biblioteca</button>
+   <button class="btn" onclick="backSearch()">Regresar a resultados</button>
+  </div>
+ `;
+ toggleDates();
+}
+
+function toggleDates(){
+ const status=document.getElementById("bookStatus").value;
+ const dates=document.getElementById("dateFields");
+
+ let start="",end="";
+ if(status==="reading"||status==="read"){
+  start=`
+   <div class="formfield">
+    <label>¿Cuándo comenzaste? (año obligatorio, mes opcional)</label>
+    <div class="dategrid">
+     <select id="startMonth">${monthOptions()}</select>
+     <input id="startYear" type="number" min="1" max="9999" placeholder="Año de inicio *">
+    </div>
+   </div>`;
+ }
+ if(status==="read"){
+  end=`
+   <div class="formfield">
+    <label>¿Cuándo terminaste? (año obligatorio, mes opcional)</label>
+    <div class="dategrid">
+     <select id="endMonth">${monthOptions()}</select>
+     <input id="endYear" type="number" min="1" max="9999" placeholder="Año de término *">
+    </div>
+   </div>`;
+ }
+ dates.innerHTML=start+end;
+}
+
+function backSearch(){
+ closeModal("bookModal");
+ openSearch();
+ searchBooks();
+}
+
+function saveChosen(){
+ const status=document.getElementById("bookStatus").value;
+ let startMonth="",startYear="",endMonth="",endYear="";
+
+ if(status==="reading"||status==="read"){
+  startMonth=document.getElementById("startMonth").value;
+  startYear=document.getElementById("startYear").value.trim();
+  if(!startYear){alert("El año en que comenzaste es obligatorio.");return;}
+ }
+ if(status==="read"){
+  endMonth=document.getElementById("endMonth").value;
+  endYear=document.getElementById("endYear").value.trim();
+  if(!endYear){alert("El año en que terminaste es obligatorio.");return;}
+ }
+
+ // Evitar duplicados por título
+ if(books.some(x=>x.title.toLowerCase()===chosen.title.toLowerCase())){
+  alert("Este libro ya está registrado.");
+  return;
+ }
+
+ books.push({
+  ...chosen,
+  id:Date.now().toString(),
+  status,
+  startMonth,startYear,
+  endMonth,endYear,
+  addedDate:new Date().toISOString()
+ });
+
+ save();
+ closeModal("bookModal");
+ chosen=null;
+}
+
+/* --- ESTADÍSTICAS --- */
+function updateStats(){
+ const read=books.filter(b=>b.status==="read");
+ document.getElementById("total").textContent=books.length;
+ document.getElementById("read").textContent=read.length;
+ document.getElementById("reading").textContent=books.filter(b=>b.status==="reading").length;
+ document.getElementById("pending").textContent=books.filter(b=>b.status==="pending").length;
+
+ const y=String(new Date().getFullYear());
+ document.getElementById("thisYear").textContent=read.filter(b=>b.endYear===y).length;
+
+ const stats={};
+ read.forEach(b=>{
+  if(b.endYear)stats[b.endYear]=(stats[b.endYear]||0)+1;
+ });
+ document.getElementById("yearStats").textContent=
+  Object.keys(stats).sort((a,b)=>b-a)
+   .map(y=>`${y}: ${stats[y]} libros`).join("  ·  ")||"Tu historial anual aparecerá aquí.";
+}
+
+/* --- LIBREROS --- */
+function render(){
+ updateStats();
+ const f=document.getElementById("filter").value.toLowerCase();
+ const status=document.getElementById("statusFilter").value;
+ const filtered=books.filter(b=>
+  (b.title.toLowerCase().includes(f)||(b.author||"").toLowerCase().includes(f))
+  &&(status==="all"||b.status===status)
+ );
+
+ const container=document.getElementById("shelves");
+ container.innerHTML="";
+
+ [
+  ["reading","Actualmente leyendo"],
+  ["pending","Pendientes"],
+  ["read","Libros leídos"]
+ ].forEach(([key,label])=>{
+  const group=filtered.filter(b=>b.status===key);
+  const section=document.createElement("section");
+  section.innerHTML=`<h2 class="section-title">${label} (${group.length})</h2>`;
+  const shelf=document.createElement("div");
+  shelf.className="shelf";
+  const row=document.createElement("div");
+  row.className="books";
+
+  if(!group.length){
+   row.innerHTML='<div class="empty">Este estante espera nuevos libros…</div>';
+  }
+
+  group.forEach(b=>{
+   const el=document.createElement("div");
+   el.className="book";
+   el.title=b.title+" — "+(b.author||"");
+   el.innerHTML=b.cover
+    ?`<img src="${safe(b.cover)}" alt="${safe(b.title)}" onerror="this.parentElement.innerHTML='<span style=padding:8px;font-size:11px>${safe(b.title)}</span>'">`
+    :`<div style="height:100%;display:grid;place-items:center;padding:7px;text-align:center;font:12px Cinzel,serif;color:#e8ddc6">${safe(b.title)}</div>`;
+   el.onclick=()=>viewBook(b.id);
+   row.appendChild(el);
+  });
+
+  shelf.appendChild(row);
+  shelf.insertAdjacentHTML("beforeend",'<div class="board"></div>');
+  section.appendChild(shelf);
+  container.appendChild(section);
+ });
+
+ // Archivo por año
+ const years=[...new Set(books.filter(b=>b.status==="read"&&b.endYear).map(b=>b.endYear))].sort((a,b)=>b-a);
+ years.forEach(y=>{
+  const group=filtered.filter(b=>b.status==="read"&&b.endYear===y);
+  if(!group.length)return;
+  const sec=document.createElement("section");
+  sec.innerHTML=`<div class="yearrow">ARCHIVO · ${y} (${group.length} libros)</div>`;
+  const shelf=document.createElement("div");
+  shelf.className="shelf";
+  const row=document.createElement("div");
+  row.className="books";
+  group.forEach(b=>{
+   const el=document.createElement("div");
+   el.className="book";
+   el.innerHTML=b.cover?`<img src="${safe(b.cover)}" alt="${safe(b.title)}">`:`<div style="padding:8px;font:12px Cinzel">${safe(b.title)}</div>`;
+   el.onclick=()=>viewBook(b.id);
+   row.appendChild(el);
+  });
+  shelf.appendChild(row);
+  shelf.insertAdjacentHTML("beforeend",'<div class="board"></div>');
+  sec.appendChild(shelf);
+  container.appendChild(sec);
+ });
+}
+
+/* --- FICHA / EDITAR / ELIMINAR --- */
+function viewBook(id){
+ const b=books.find(x=>x.id===id);
+ if(!b)return;
+ chosen=b;
+
+ document.getElementById("bookModal").classList.add("active");
+ document.getElementById("bookForm").innerHTML=`
+  <h2>${safe(b.title)}</h2>
+  <div class="selectedbook">
+   ${b.cover?`<img src="${safe(b.cover)}" alt="Portada">`:""}
+   <div>
+    <p>${safe(b.author||"Autor desconocido")}</p>
+    <p class="small">Estado: ${b.status==="read"?"Leído":b.status==="reading"?"Leyendo":"Pendiente"}</p>
+    <p class="small">${b.startYear?"Inicio: "+(b.startMonth?monthName(b.startMonth)+" ":"")+b.startYear:""}</p>
+    <p class="small">${b.endYear?"Término: "+(b.endMonth?monthName(b.endMonth)+" ":"")+b.endYear:""}</p>
+   </div>
+  </div>
+  <div class="actions">
+   <button class="btn gold" onclick="editChosen()">Editar</button>
+   <button class="btn" onclick="changeChosenStatus('pending')">Pendiente</button>
+   <button class="btn" onclick="changeChosenStatus('reading')">Leyendo</button>
+   <button class="btn" onclick="changeChosenStatus('read')">Leído</button>
+   <button class="btn" onclick="removeChosen()">Eliminar</button>
+  </div>`;
+}
+
+function monthName(m){
+ return months.find(x=>x[0]===m)?.[1]||m;
+}
+
+function changeChosenStatus(s){
+ chosen.status=s;
+ if(s==="pending"){
+  chosen.startMonth="";chosen.startYear="";
+  chosen.endMonth="";chosen.endYear="";
+ }
+ save();
+ viewBook(chosen.id);
+}
+
+function editChosen(){
+ showForm();
+ document.getElementById("bookStatus").value=chosen.status;
+ toggleDates();
+ if(chosen.status==="reading"||chosen.status==="read"){
+  document.getElementById("startMonth").value=chosen.startMonth||"";
+  document.getElementById("startYear").value=chosen.startYear||"";
+ }
+ if(chosen.status==="read"){
+  document.getElementById("endMonth").value=chosen.endMonth||"";
+  document.getElementById("endYear").value=chosen.endYear||"";
+ }
+}
+
+function removeChosen(){
+ if(!confirm("¿Eliminar este libro de tu biblioteca?"))return;
+ books=books.filter(b=>b.id!==chosen.id);
+ chosen=null;
+ save();
+ closeModal("bookModal");
+}
+
+/* --- EXPORTAR RESPALDO --- */
+function exportBackup(){
+ const blob=new Blob([JSON.stringify(books,null,2)],{type:"application/json"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="bibliotheca-respaldo.json";
+ a.click();
+ URL.revokeObjectURL(a.href);
+}
+
+document.querySelectorAll(".modal-bg").forEach(m=>{
+ m.onclick=e=>{if(e.target===m)m.classList.remove("active")};
+});
+
+render();
+</script>
+</body>
+</html>
